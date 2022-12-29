@@ -15,6 +15,13 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from log.logger import Logger
 
 class WMSPublishGenerator():
+    """
+    WMS Publish Generator
+    ##TODO: 변수명 정리, 프로세스 정리
+    1. Add workspace
+    2. Add data store
+    3. Publish WMS to Geoserver
+    """
     def __init__(self, geoServerProjectInputPath):
         self.inputPath = geoServerProjectInputPath
 
@@ -95,44 +102,11 @@ class WMSPublishGenerator():
         # # Define the name of the workspace where you want to publish the WMS layer
         workspace = "dbkim"
         # # Define the data store that contains the WMS layer
-        data_store_name = "testDataStore"
-        data_store_path = f"{dataInputPath}/testDataStore.shp"
-        # url = f"{base_url}/workspaces/{workspace}/datastores/{data_store_name}.json"
-        url = f"{base_url}/workspaces/{workspace}.json"
+        data_store_name = "test_data_store"
+        data_store_path = f"{dataInputPath}/ctp_rvn.shp"
+        url = f"{base_url}/workspaces/{workspace}/datastores/{data_store_name}.json"
 
-        # # Add shp datastore
-        payload = {
-            "dataStore": {
-                "name": data_store_name,
-                "type": "Shapefile",
-                "enabled": "true",
-                "workspace": {
-                    "name": workspace
-                },
-                "connectionParameters": {
-                    "entry": [
-                        {
-                            "@key": "create spatial index",
-                            "$": "true"
-                        },
-                        {
-                            "@key": "charset",
-                            "$": "UTF-8"
-                        },
-                        {
-                            "@key": "url",
-                            "$": f"file:{data_store_path}"
-                        }
-                    ]
-                }
-            }
-        }
-
-
-        response = requests.post(url, auth=auth, json=payload)
-
-
-        # response = requests.get(url, auth=auth)
+        response = requests.get(url, auth=auth)
 
         if response.status_code == 200:
             data_store = response.json()
@@ -141,16 +115,16 @@ class WMSPublishGenerator():
             logger.writeLog(response.status_code)
             logger.writeLog("Error retrieving data store")
 
-        # data_store["dataStore"]["connectionParameters"]["path"] = data_store_path
+        data_store["dataStore"]["connectionParameters"]["path"] = data_store_path
 
-        # url = f"{base_url}/workspaces/{workspace}/datastores/{data_store_name}"
+        url = f"{base_url}/workspaces/{workspace}/datastores/{data_store_name}"
 
-        # response = requests.put(url, auth=auth, json=data_store)
+        response = requests.put(url, auth=auth, json=data_store)
 
-        # if response.status_code == 200:
-        #     print("Data store path successfully set")
-        # else:
-        #     print("Error setting data store path")
+        if response.status_code == 200:
+            print("Data store path successfully set")
+        else:
+            print("Error setting data store path")
 
 
     def addDataStore(self):
@@ -159,30 +133,31 @@ class WMSPublishGenerator():
         dataPath  = self.inputPath
 
     
-        base_url = "http://localhost:8080/geoserver/rest"
+        baseUrl = "http://localhost:8080/geoserver/rest"
         auth = ("admin", "geoserver")
         workspace = "dbkim"
-        data_store_name = "test_data_store"
-        data_store_type = "shapefile"
-        connection_parameters = {
+        dataStoreName = "test_data_store"
+        dataStoreType = "shapefile"
+        connectionParameters = {
             "url": f"file:{dataPath}",
             "namespace": "http://example.com/namespace"
         }
 
         payload = {
             "dataStore": {
-                "name": data_store_name,
-                "type": data_store_type,
+                "name": dataStoreName,
+                "type": dataStoreType,
                 "enabled": True,
                 "workspace": {
                     "name": workspace
                 },
-                "connectionParameters": connection_parameters
+                "connectionParameters": connectionParameters
             }
         }
 
-        url = f"{base_url}/workspaces/{workspace}/datastores"
+        url = f"{baseUrl}/workspaces/{workspace}/datastores"
 
+        # # FIXME: 예외 처리 및 케이스 정리. dataStore가 있을 경우, 없을 경우
         response = requests.post(url, auth=auth, json=payload)
 
         if response.status_code == 201:
@@ -194,4 +169,58 @@ class WMSPublishGenerator():
         if response.status_code == 200:
             data_store = response.json()
             logger.writeLog(data_store)
-        # # FIXME: 변수 명 리팩터링
+
+        
+        ##TODO: 코드 분석. openGPT 소스 예시 -- 시작
+        # To create a Python code that checks if a datastore exists in GeoServer and adds it if it does not, you can use the GeoServer REST API and the requests library in Python.
+
+        # Here is an example of how you could do this:
+        import requests
+
+        # Set the base URL for the GeoServer REST API
+        base_url = "http://localhost:8080/geoserver/rest"
+
+        # Set the name of the datastore you want to check for and add
+        datastore_name = "my_datastore"
+
+        # Set the user name and password for your GeoServer instance
+        username = "admin"
+        password = "geoserver"
+
+        # Check if the datastore exists by sending a GET request to the datastore resource
+        url = f"{base_url}/workspaces/my_workspace/datastores/{datastore_name}.json"
+        response = requests.get(url, auth=(username, password))
+
+        # If the datastore does not exist, add it by sending a POST request to the datastores resource
+        if response.status_code == 404:
+            # Set the payload for the POST request
+            data = """
+            <dataStore>
+            <name>{}</name>
+            <connectionParameters>
+                <entry key="ConnectionURL">file:data/{}</entry>
+                <entry key="create">true</entry>
+            </connectionParameters>
+            </dataStore>
+            """.format(datastore_name, datastore_name)
+            headers = {"Content-Type": "text/xml"}
+            url = f"{base_url}/workspaces/my_workspace/datastores"
+            response = requests.post(url, data=data, headers=headers, auth=(username, password))
+
+        # Check the response status code to see if the request was successful
+        if response.status_code == 201:
+            print("Datastore added successfully")
+        else:
+            print("Error adding datastore")
+
+        # In this example, the code sends a GET request to the datastore resource for the specified datastore name to check if it exists. 
+        # If the datastore does not exist (i.e. if the response status code is 404), the code sends a POST request to the datastores resource to add the datastore. 
+        # The payload for the POST request specifies the name of the datastore and the connection parameters for the datastore.
+
+        # You can customize this code to fit your specific needs by changing the base URL, the datastore name, the user name and password, and the connection parameters for the datastore. 
+        # You may also need to modify the code to handle other response status codes and handle errors appropriately.
+        ##TODO: 코드 분석. openGPT 소스 예시 -- 끝
+
+
+
+
