@@ -81,6 +81,73 @@ class WMSPublishGenerator():
             with open("image2.png", "wb") as f:
                 f.write(image_data)
 
+    def getSeoulRtd(self):
+        logger = Logger()
+        hotsportNm = '용산역'
+        baseDate = '20221230'
+        # timeCd = '1740'
+        # timeCd = '0000'
+
+        # # time data list
+        # # 00시 00분 ~ 23시 55분 (5분 단위)
+        timeCdList = []
+        for i in range(0, 24):
+            for j in range(0, 60, 5):
+                timeCd = f'{str(i).zfill(2)}{str(j).zfill(2)}'
+                timeCdList.append(timeCd)
+
+        # timeCdList = ['0000', '0005']
+
+        for timeCd in timeCdList:
+            url = f'''
+                https://data.seoul.go.kr/SeoulRtd/heatmap_api
+                ?hotspotNm={hotsportNm}
+                &baseDate={baseDate}
+                &timeCd={timeCd}
+                &minX=126.94672645688983
+                &minY=37.524660454413855
+                &maxX=126.9658276704073
+                &maxY=37.534464967056806
+                &width=847
+                &height=577
+                &format=image/png
+            '''.replace('\n', '').replace(' ', '')
+
+            # # Get WMS Layer and format is PNG
+            # logger.writeLog(url)
+            response = requests.get(url)
+            
+            # logger.writeLog(f'response status code : {response.status_code}')
+            if response.status_code == 200:
+                # logger.writeLog('WMS Layer Get Success')
+
+                image_data = response.content
+                
+                # # 사진 left-bottom 에 heatmap_{hotsportNm}_{baseDate}_{timeCd}  표시 # 인코딩은 utf-8로
+                image = Image.open(BytesIO(image_data))
+                draw = ImageDraw.Draw(image)
+                font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 20)
+                draw.text(
+                    (0, 0) # x, y
+                    # , f'heatmap_{hotsportNm}_{baseDate}_{timeCd}' # text
+                    , f'heatmap_yongsan_{baseDate}_{timeCd}' # text # FIXME: 한글명이 깨짐
+                    , (255, 255, 255) # color
+                    , font=font # font
+                )
+                image_data = BytesIO()
+                image.save(image_data, format='PNG')
+                image_data = image_data.getvalue()
+
+                # Save the image data to a file
+                with open(f"figure/heatmap_fig_v4/heatmap_{hotsportNm}_{baseDate}_{timeCd}.png", "wb") as f:
+                    f.write(image_data)
+
+        # # Save the image data to a gif file
+        with imageio.get_writer(f'figure/heatmap_fig_v4/heatmap_{hotsportNm}_{baseDate}.gif', mode='I') as writer:
+            for timeCd in timeCdList:
+                image = imageio.imread(f'figure/heatmap_fig_v4/heatmap_{hotsportNm}_{baseDate}_{timeCd}.png')
+                writer.append_data(image)
+
 
 
 

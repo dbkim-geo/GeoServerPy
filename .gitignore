@@ -2,3 +2,5 @@
 */__pycahce__/*/
 geoserverpy38/*
 *.pyc
+*.png
+*.gif

@@ -12,11 +12,13 @@ def main():
     wmsPublishGenerator = WMSPublishGenerator(
         ConfigValue.geoServerProjectInputPath
     )
+    # wmsPublishGenerator.getWMSLayer()
     # wmsPublishGenerator.publishWMSToGeoserver()
     # wmsPublishGenerator.setDataStorePath()
     # wmsPublishGenerator.addDataStore()
-    wmsPublishGenerator.getWMSLayer()
 
+    # wmsPublishGenerator.testDataStore()
+    wmsPublishGenerator.getSeoulRtd()
 
 
 
