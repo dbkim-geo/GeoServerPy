@@ -13,9 +13,9 @@ def main():
         ConfigValue.geoServerProjectInputPath
     )
     # wmsPublishGenerator.publishWMSToGeoserver()
-    wmsPublishGenerator.setDataStorePath()
+    # wmsPublishGenerator.setDataStorePath()
     # wmsPublishGenerator.addDataStore()
-
+    wmsPublishGenerator.getWMSLayer()
 
 
 
