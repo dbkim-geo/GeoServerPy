@@ -55,28 +55,22 @@ class GeoserverRestAPIGenerator():
         # logger.writeLog(f'workspace : {geo.get_workspace("demo")}')
 
 
+        '''
+        Creating coveragestores
+        -- publishing the raster data to the geoserver
+        '''
+        lyrNm = 'lst_sample_1'
+        # # get coveragestore list
+        # logger.writeLog(f'coveragestore : {geo.get_coveragestores()}')
 
-
-        dataStoreNm = 'lst_sample_1'
-
-        # # get all the datastores
-        # logger.writeLog(f'datastore : {geo.get_datastores()}')
-
-        # # get dataStoreNm datastore
-        dataStore = geo.get_datastores(workspace= workspaceNm)
-        # logger.writeLog(dataStore['dataStores'])
-
-        # # # Check if the datastore already exists (dataStore var is blank)
-        if not dataStore['dataStores']:
-            logger.writeLog(f'{dataStoreNm} datastore is not exist.')
-            geo.create_datastore(
-                workspace= workspaceNm
-                , name= dataStoreNm
-                , path= f'{geoserverFileBaseInputDir}lst_sample_1/'
+        if not geo.get_layer(layer_name=f'{lyrNm}'):
+            logger.writeLog(f'{lyrNm} layer is not exist.')
+            geo.create_coveragestore(
+                layer_name=f'{lyrNm}'
+                , path=f'{geoserverFileBaseInputDir}/lst_sample_1.tif'
+                , workspace=f'{workspaceNm}'
             )
-            logger.writeLog(f'{dataStoreNm} datastore is created.')
+            logger.writeLog(f'{lyrNm} layer is created.')
         else:
-            logger.writeLog(f'{dataStoreNm} datastore is already exist.')
-
-
-
+            logger.writeLog(f'{lyrNm} layer is already exist.')
+        
